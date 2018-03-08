@@ -1,12 +1,55 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 
 using namespace std;
 
+ifstream input;
+ofstream output;
+
+void alwaysTaken() {
+	long address = 0;
+	string type;
+	string prediction = "T";
+	long correct = 0;
+	long total = -1;
+
+	while (!input.eof()) {
+		type.clear();
+		input >> hex >> address;
+		input >> type;
+
+		if (type == prediction) {
+			correct++;
+		}
+		total++;
+	}
+
+	output << correct << "," << total << ";" << endl;
+}
+
+void alwaysNotTaken() {
+	long address = 0;
+	string type;
+	string prediction = "NT";
+	long correct = 0;
+	long total = -1;
+
+	while (!input.eof()) {
+		type.clear();
+		input >> hex >> address;
+		input >> type;
+
+		if (type == prediction) {
+			correct++;
+		}
+		total++;
+	}
+
+	output << correct << "," << total << ";" << endl;
+}
+
 int main(int argc, char *argv[]) {
-	ifstream input;
-	ofstream output;
-	
 	string infilename;
 	string outfilename;
 
@@ -21,12 +64,12 @@ int main(int argc, char *argv[]) {
 	input.open(infilename);
 	output.open(outfilename);
 
-	long address = 0;
-	string type;
-
-	while (!input.eof()) {
-		
-	}
-
-
+	alwaysTaken();
+	input.clear();
+	input.seekg(0, input.beg);
+	
+	alwaysNotTaken();
+	
+	input.close();
+	output.close();
 }
