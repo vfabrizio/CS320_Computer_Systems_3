@@ -2,34 +2,40 @@
 #include <fstream>
 #include <string>
 #include <list>
+#include <map>
 
 using namespace std;
 
 ifstream input;
 ofstream output;
 
-long address = 0;
-string type;
+multimap<long,string> data;
 
 long correct = 0;
 long total = -1;
 int tableSize = 0;
 
-
-void alwaysTaken() {
-	string prediction = "T";
-	correct = 0;
-	total = -1;
-
+void readfile() {
+	long address = 0;
+	string type;
 	while (!input.eof()) {
 		type.clear();
 		input >> hex >> address;
 		input >> type;
 
-		if (type == prediction) {
+		data.insert(pair<long,string>(address, type));
+		total++;
+	}
+}
+
+void alwaysTaken() {
+	string prediction = "T";
+	correct = 0;
+
+	for (multimap<long,string>::iterator i = data.begin(); i != data.end(); i++) {
+		if (i->second == prediction) {
 			correct++;
 		}
-		total++;
 	}
 
 	output << correct << "," << total << ";" << endl;
@@ -39,12 +45,8 @@ void alwaysNotTaken() {
 	string prediction = "NT";
 	correct = 0;
 
-	while (!input.eof()) {
-		type.clear();
-		input >> hex >> address;
-		input >> type;
-
-		if (type == prediction) {
+	for (multimap<long,string>::iterator i = data.begin(); i != data.end(); i++) {
+		if (i->second == prediction) {
 			correct++;
 		}
 	}
@@ -55,10 +57,21 @@ void alwaysNotTaken() {
 void checkBimodalSingle(list<string> &table) {
 	list<string>::iterator it = table.begin();
 	correct = 0;
-	input.clear();
-	input.seekg(0, input.beg);
+	long index = 0;
 
-	while (!input.eof()) {
+	for (multimap<long,string>::iterator i = data.begin(); i != data.end(); i++) {
+		index = ((*i).first) % tableSize;
+		it = table.begin();
+		advance(it, index);
+
+		if ((*i).second == *it) {
+			correct++;
+		}else {
+			*it = (*i).second;
+		}
+	}
+
+	/*while (!input.eof()) {
 		type.clear();
 		input >> hex >> address;
 		input >> type;
@@ -72,7 +85,7 @@ void checkBimodalSingle(list<string> &table) {
 		}else {
 			*it = type;
 		}
-	}
+	}*/
 
 	output << correct << "," << total << "; ";
 }
@@ -108,7 +121,7 @@ void bimodalSingle() {
 	
 	output << endl;
 }
-
+#if 0
 void checkBimodalDouble(list<string> &table) {
 	list<string>::iterator it = table.begin();
 	correct = 0;
@@ -189,6 +202,7 @@ void bimodalDouble() {
 
 	output << endl;
 }
+#endif
 
 int main(int argc, char *argv[]) {
 	string infilename;
@@ -205,22 +219,17 @@ int main(int argc, char *argv[]) {
 	input.open(infilename);
 	output.open(outfilename);
 
+	readfile();
 	alwaysTaken();
-	input.clear();
-	input.seekg(0, input.beg);
-	
 	alwaysNotTaken();
-	input.clear();
-	input.seekg(0, input.beg);
-	
 	bimodalSingle();
-	input.clear();
-	input.seekg(0, input.beg);
 
+	/*
 	bimodalDouble();
 	input.clear();
 	input.seekg(0, input.beg);
 
 	input.close();
 	output.close();
+	*/
 }
