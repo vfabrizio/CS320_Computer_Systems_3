@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <list>
+#include <cmath>
 #include "LinkedList.h"
 
 
@@ -30,7 +31,7 @@ LinkedList::~LinkedList() {
 }
 
 //inserts to the back of the list
-void LinkedList::insert(long addr, std::string t) {
+void LinkedList::insert(unsigned int addr, std::string t) {
 	Node * new_node = new Node(addr, t);
 	if (head == NULL) {
 		head = new_node;
@@ -50,7 +51,7 @@ bool LinkedList::empty() {
 
 }
 
-bool LinkedList::remove(long &addr) {
+bool LinkedList::remove(unsigned int &addr) {
 	Node *temp = NULL;
 	Node *next = NULL;
 	Node *prev = NULL;
@@ -76,9 +77,9 @@ bool LinkedList::remove(long &addr) {
 	return false;
 }
 
-long LinkedList::iterate(std::string prediction) {
+unsigned int LinkedList::iterate(std::string prediction) {
 	Node * temp = head;
-	long correct = 0;
+	unsigned int correct = 0;
 	while (temp != NULL) {
 		if (temp->type == prediction) {
 			correct++;
@@ -88,12 +89,12 @@ long LinkedList::iterate(std::string prediction) {
 	return correct;
 }
 
-long LinkedList::iterateBimodalSingle(std::list<std::string> &table, long tableSize) {
+unsigned int LinkedList::iterateBimodalSingle(std::list<std::string> &table, unsigned int tableSize) {
 	std::list<std::string>::iterator it = table.begin();
-	long index = 0;
+	unsigned int index = 0;
 
 	Node * temp = head;
-	long correct = 0;
+	unsigned int correct = 0;
 	while (temp != NULL) {
 		index = temp->address % tableSize;
 		it = table.begin();
@@ -109,12 +110,12 @@ long LinkedList::iterateBimodalSingle(std::list<std::string> &table, long tableS
 	return correct;
 }
 
-long LinkedList::iterateBimodalDouble(std::list<std::string> &table, long tableSize) {
+unsigned int LinkedList::iterateBimodalDouble(std::list<std::string> &table, unsigned int tableSize) {
 	std::list<std::string>::iterator it = table.begin();
-	long index = 0;
+	unsigned int index = 0;
 
 	Node * temp = head;
-	long correct = 0;
+	unsigned int correct = 0;
 
 	while (temp != NULL) {
 		index = temp->address % tableSize;
@@ -153,15 +154,15 @@ long LinkedList::iterateBimodalDouble(std::list<std::string> &table, long tableS
 	return correct;
 }
 
-long LinkedList::iterateGshare(std::list<std::string> &table, long tableSize, short int gr, int grLen) {
+unsigned int LinkedList::iterateGshare(std::list<std::string> &table, unsigned int tableSize, short int gr, int grLen) {
 	std::list<std::string>::iterator it = table.begin();
-	long index = 0;
+	unsigned int index = 0;
 
 	Node * temp = head;
-	long correct = 0;
+	unsigned int correct = 0;
 
 	while (temp != NULL) {
-		index = (temp->address % tableSize) ^ gr;
+		index = (temp->address % tableSize) ^ (gr & (short int)(pow(2, grLen) -1));
 		it = table.begin();
 		std::advance(it, index);
 
@@ -192,9 +193,16 @@ long LinkedList::iterateGshare(std::list<std::string> &table, long tableSize, sh
 				correct++;
 			}
 		}
+		//shift gr left one to put in the recent outcome
 		gr = gr << 1;
 		//clear the grLen+1 bit
+		gr &= ~(1 << (grLen+1));
 		//push new into back
+		if (temp->type == "T") {
+			gr ^= 1 << 0;
+		}
+
+
 		temp = temp->next;
 	}
 	return correct;

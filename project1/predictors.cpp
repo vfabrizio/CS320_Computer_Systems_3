@@ -11,12 +11,12 @@ ofstream output;
 
 LinkedList * data = new LinkedList();
 
-long correct = 0;
-long total = -1;
-long tableSize = 0;
+unsigned int correct = 0;
+unsigned int total = -1;
+unsigned int tableSize = 0;
 
 void readfile() {
-	long address = 0;
+	unsigned int address = 0;
 	string type;
 	while (!input.eof()) {
 		type.clear();
@@ -126,12 +126,17 @@ void bimodalDouble() {
 
 void gshare() {
 	tableSize = 2048;
-	list<string> table (tableSize, "TT");
 
+	list<string> table (tableSize, "TT");
 	short int gr = 0;
 	correct = data->iterateGshare(table, tableSize, gr, 3);
-
-
+	output << correct << "," << total << "; ";
+#if 0
+	table.assign(tableSize, "TT");
+	gr = 0;
+	correct = data->iterateGshare(table, tableSize, gr, 4);
+	output << correct << "," << total << "; ";
+#endif
 }
 
 int main(int argc, char *argv[]) {
