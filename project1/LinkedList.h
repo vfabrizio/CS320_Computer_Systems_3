@@ -3,17 +3,16 @@
 
 #include <cstdlib>
 #include <list>
-#include <string>
 
 class LinkedList {
 	private:
 		class Node {
 			public:
 				unsigned int address;
-				std::string type;
+				short int type;
 				Node * next;
-				Node(unsigned int addr, std::string t) { address = addr; type = t; next = NULL; }
-				Node(unsigned int addr, std::string t, Node *n) {
+				Node(unsigned int addr, short int t) { address = addr; type = t; next = NULL; }
+				Node(unsigned int addr, short int t, Node *n) {
 					address = addr;
 					type = t;
 					next = n;
@@ -27,13 +26,13 @@ class LinkedList {
 		LinkedList();
 		LinkedList(const LinkedList &l);
 		~LinkedList();
-		void insert(unsigned int addr, std::string t);
+		void insert(unsigned int addr, short int t);
 	    bool empty();
 		bool remove(unsigned int &addr);
-		unsigned int iterate(std::string prediction);
-		unsigned int iterateBimodalSingle(std::list<std::string> &table, unsigned int tableSize);
-		unsigned int iterateBimodalDouble(std::list<std::string> &table, unsigned int tableSize);
-		unsigned int iterateGshare(std::list<std::string> &table, unsigned int tableSize, short int gr, int grLen);
+		unsigned int iterate(short int prediction);
+		unsigned int iterateBimodalSingle(std::list<short int> &table, unsigned int tableSize);
+		unsigned int iterateBimodalDouble(std::list<short int> &table, unsigned int tableSize);
+		unsigned int iterateGshare(std::list<short int> &table, unsigned int tableSize, short int &gr, int grLen);
 };
 
 #endif

@@ -31,7 +31,7 @@ LinkedList::~LinkedList() {
 }
 
 //inserts to the back of the list
-void LinkedList::insert(unsigned int addr, std::string t) {
+void LinkedList::insert(unsigned int addr, short int t) {
 	Node * new_node = new Node(addr, t);
 	if (head == NULL) {
 		head = new_node;
@@ -77,7 +77,7 @@ bool LinkedList::remove(unsigned int &addr) {
 	return false;
 }
 
-unsigned int LinkedList::iterate(std::string prediction) {
+unsigned int LinkedList::iterate(short int prediction) {
 	Node * temp = head;
 	unsigned int correct = 0;
 	while (temp != NULL) {
@@ -89,8 +89,8 @@ unsigned int LinkedList::iterate(std::string prediction) {
 	return correct;
 }
 
-unsigned int LinkedList::iterateBimodalSingle(std::list<std::string> &table, unsigned int tableSize) {
-	std::list<std::string>::iterator it = table.begin();
+unsigned int LinkedList::iterateBimodalSingle(std::list<short int> &table, unsigned int tableSize) {
+	std::list<short int>::iterator it = table.begin();
 	unsigned int index = 0;
 
 	Node * temp = head;
@@ -110,8 +110,10 @@ unsigned int LinkedList::iterateBimodalSingle(std::list<std::string> &table, uns
 	return correct;
 }
 
-unsigned int LinkedList::iterateBimodalDouble(std::list<std::string> &table, unsigned int tableSize) {
-	std::list<std::string>::iterator it = table.begin();
+unsigned int LinkedList::iterateBimodalDouble(std::list<short int> &table, unsigned int tableSize) {
+	//3 = strongly taken, 2 = weakly taken
+	//1 = weakly not taken, 0 = strongly not taken
+	std::list<short int>::iterator it = table.begin();
 	unsigned int index = 0;
 
 	Node * temp = head;
@@ -122,30 +124,30 @@ unsigned int LinkedList::iterateBimodalDouble(std::list<std::string> &table, uns
 		it = table.begin();
 		std::advance(it, index);
 
-		if (*it == "TT") {
-			if (temp->type == "T") {
+		if (*it == 3) {
+			if (temp->type == 1) {
 				correct++;
-			}else if (temp->type == "NT") {
-				*it = "WT";
+			}else if (temp->type == 0) {
+				*it = 2;
 			}
-		}else if (*it == "WT") {
-			if (temp->type == "T") {
+		}else if (*it == 2) {
+			if (temp->type == 1) {
 				correct++;
-				*it = "TT";
-			}else if (temp->type == "NT") {
-				*it = "WN";
+				*it = 3;
+			}else if (temp->type == 0) {
+				*it = 1;
 			}
-		}else if (*it == "WN") {
-			if (temp->type == "T") {
-				*it = "WT";
-			}else if (temp->type == "NT") {
+		}else if (*it == 1) {
+			if (temp->type == 1) {
+				*it = 2;
+			}else if (temp->type == 0) {
 				correct++;
-				*it = "NN";
+				*it = 0;
 			}
-		}else if (*it == "NN") {
-			if (temp->type == "T") {
-				*it = "WN";
-			}else if (temp->type == "NT") {
+		}else if (*it == 0) {
+			if (temp->type == 1) {
+				*it = 1;
+			}else if (temp->type == 0) {
 				correct++;
 			}
 		}
@@ -154,8 +156,8 @@ unsigned int LinkedList::iterateBimodalDouble(std::list<std::string> &table, uns
 	return correct;
 }
 
-unsigned int LinkedList::iterateGshare(std::list<std::string> &table, unsigned int tableSize, short int gr, int grLen) {
-	std::list<std::string>::iterator it = table.begin();
+unsigned int LinkedList::iterateGshare(std::list<short int> &table, unsigned int tableSize, short int &gr, int grLen) {
+	std::list<short int>::iterator it = table.begin();
 	unsigned int index = 0;
 
 	Node * temp = head;
@@ -166,30 +168,30 @@ unsigned int LinkedList::iterateGshare(std::list<std::string> &table, unsigned i
 		it = table.begin();
 		std::advance(it, index);
 
-		if (*it == "TT") {
-			if (temp->type == "T") {
+		if (*it == 3) {
+			if (temp->type == 1) {
 				correct++;
-			}else if (temp->type == "NT") {
-				*it = "WT";
+			}else if (temp->type == 0) {
+				*it = 2;
 			}
-		}else if (*it == "WT") {
-			if (temp->type == "T") {
+		}else if (*it == 2) {
+			if (temp->type == 1) {
 				correct++;
-				*it = "TT";
-			}else if (temp->type == "NT") {
-				*it = "WN";
+				*it = 3;
+			}else if (temp->type == 0) {
+				*it = 1;
 			}
-		}else if (*it == "WN") {
-			if (temp->type == "T") {
-				*it = "WT";
-			}else if (temp->type == "NT") {
+		}else if (*it == 1) {
+			if (temp->type == 1) {
+				*it = 2;
+			}else if (temp->type == 0) {
 				correct++;
-				*it = "NN";
+				*it = 0;
 			}
-		}else if (*it == "NN") {
-			if (temp->type == "T") {
-				*it = "WN";
-			}else if (temp->type == "NT") {
+		}else if (*it == 0) {
+			if (temp->type == 1) {
+				*it = 1;
+			}else if (temp->type == 0) {
 				correct++;
 			}
 		}
@@ -198,7 +200,7 @@ unsigned int LinkedList::iterateGshare(std::list<std::string> &table, unsigned i
 		//clear the grLen+1 bit
 		gr &= ~(1 << (grLen+1));
 		//push new into back
-		if (temp->type == "T") {
+		if (temp->type == 1) {
 			gr ^= 1 << 0;
 		}
 

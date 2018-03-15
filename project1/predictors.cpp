@@ -18,18 +18,26 @@ unsigned int tableSize = 0;
 void readfile() {
 	unsigned int address = 0;
 	string type;
+	short int type_num = 0;
 	while (!input.eof()) {
 		type.clear();
+		type_num = 0;
 		input >> hex >> address;
 		input >> type;
 
-		data->insert(address, type);
+		if (type == "T") {
+			type_num = 1;
+		} else if (type == "NT") {
+			type_num = 0;
+		}
+
+		data->insert(address, type_num);
 		total++;
 	}
 }
 
 void alwaysTaken() {
-	string prediction = "T";
+	short int prediction = 1;
 
 	correct = data->iterate(prediction);
 
@@ -37,7 +45,7 @@ void alwaysTaken() {
 }
 
 void alwaysNotTaken() {
-	string prediction = "NT";
+	short int prediction = 0;
 
 	correct = data->iterate(prediction);
 
@@ -46,37 +54,37 @@ void alwaysNotTaken() {
 
 void bimodalSingle() {
 	tableSize = 16;
-	list<string> table (tableSize, "T");
+	list<short int> table (tableSize, 1);
 	correct = data->iterateBimodalSingle(table, tableSize);
 	output << correct << "," << total << "; ";
 
 	tableSize = 32;
-	table.assign(tableSize, "T");
+	table.assign(tableSize, 1);
 	correct = data->iterateBimodalSingle(table, tableSize);
 	output << correct << "," << total << "; ";
 
 	tableSize = 128;
-	table.assign(tableSize, "T");
+	table.assign(tableSize, 1);
 	correct = data->iterateBimodalSingle(table, tableSize);
 	output << correct << "," << total << "; ";
 
 	tableSize = 256;
-	table.assign(tableSize, "T");
+	table.assign(tableSize, 1);
 	correct = data->iterateBimodalSingle(table, tableSize);
 	output << correct << "," << total << "; ";
 
 	tableSize = 512;
-	table.assign(tableSize, "T");
+	table.assign(tableSize, 1);
 	correct = data->iterateBimodalSingle(table, tableSize);
 	output << correct << "," << total << "; ";
 
 	tableSize = 1024;
-	table.assign(tableSize, "T");
+	table.assign(tableSize, 1);
 	correct = data->iterateBimodalSingle(table, tableSize);
 	output << correct << "," << total << "; ";
 
 	tableSize = 2048;
-	table.assign(tableSize, "T");
+	table.assign(tableSize, 1);
 	correct = data->iterateBimodalSingle(table, tableSize);
 	output << correct << "," << total << "; ";
 	
@@ -84,40 +92,40 @@ void bimodalSingle() {
 }
 
 void bimodalDouble() {
-	//TT = strongly taken, WT = weakly taken
-	//WN = weakly not taken, NN = strongly not taken
+	//3 = strongly taken, 2 = weakly taken
+	//1 = weakly not taken, 0 = strongly not taken
 	tableSize = 16;
-	list<string> table (tableSize, "TT");
+	list<short int> table (tableSize, 3);
 	correct = data->iterateBimodalDouble(table, tableSize);
 	output << correct << "," << total << "; ";
 
 	tableSize = 32;
-	table.assign(tableSize, "TT");
+	table.assign(tableSize, 3);
 	correct = data->iterateBimodalDouble(table, tableSize);
 	output << correct << "," << total << "; ";
 
 	tableSize = 128;
-	table.assign(tableSize, "TT");
+	table.assign(tableSize, 3);
 	correct = data->iterateBimodalDouble(table, tableSize);
 	output << correct << "," << total << "; ";
 
 	tableSize = 256;
-	table.assign(tableSize, "TT");
+	table.assign(tableSize, 3);
 	correct = data->iterateBimodalDouble(table, tableSize);
 	output << correct << "," << total << "; ";
 
 	tableSize = 512;
-	table.assign(tableSize, "TT");
+	table.assign(tableSize, 3);
 	correct = data->iterateBimodalDouble(table, tableSize);
 	output << correct << "," << total << "; ";
 
 	tableSize = 1024;
-	table.assign(tableSize, "TT");
+	table.assign(tableSize, 3);
 	correct = data->iterateBimodalDouble(table, tableSize);
 	output << correct << "," << total << "; ";
 
 	tableSize = 2048;
-	table.assign(tableSize, "TT");
+	table.assign(tableSize, 3);
 	correct = data->iterateBimodalDouble(table, tableSize);
 	output << correct << "," << total << "; ";
 
@@ -127,16 +135,52 @@ void bimodalDouble() {
 void gshare() {
 	tableSize = 2048;
 
-	list<string> table (tableSize, "TT");
+	list<short int> table (tableSize, 3);
 	short int gr = 0;
 	correct = data->iterateGshare(table, tableSize, gr, 3);
 	output << correct << "," << total << "; ";
-#if 0
-	table.assign(tableSize, "TT");
+
+	table.assign(tableSize, 3);
 	gr = 0;
 	correct = data->iterateGshare(table, tableSize, gr, 4);
 	output << correct << "," << total << "; ";
-#endif
+
+	table.assign(tableSize, 3);
+	gr = 0;
+	correct = data->iterateGshare(table, tableSize, gr, 5);
+	output << correct << "," << total << "; ";
+
+	table.assign(tableSize, 3);
+	gr = 0;
+	correct = data->iterateGshare(table, tableSize, gr, 6);
+	output << correct << "," << total << "; ";
+
+	table.assign(tableSize, 3);
+	gr = 0;
+	correct = data->iterateGshare(table, tableSize, gr, 7);
+	output << correct << "," << total << "; ";
+
+	table.assign(tableSize, 3);
+	gr = 0;
+	correct = data->iterateGshare(table, tableSize, gr, 8);
+	output << correct << "," << total << "; ";
+
+	table.assign(tableSize, 3);
+	gr = 0;
+	correct = data->iterateGshare(table, tableSize, gr, 9);
+	output << correct << "," << total << "; ";
+
+	table.assign(tableSize, 3);
+	gr = 0;
+	correct = data->iterateGshare(table, tableSize, gr, 10);
+	output << correct << "," << total << "; ";
+
+	table.assign(tableSize, 3);
+	gr = 0;
+	correct = data->iterateGshare(table, tableSize, gr, 11);
+	output << correct << "," << total << "; ";
+
+	cout << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -160,6 +204,7 @@ int main(int argc, char *argv[]) {
 	alwaysNotTaken();
 	bimodalSingle();
 	bimodalDouble();
+	gshare();
 
 	input.close();
 	output.close();
