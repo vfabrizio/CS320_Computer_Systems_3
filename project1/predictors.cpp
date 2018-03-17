@@ -25,6 +25,7 @@ int alwaysNotTaken(string type) {
 }
 
 int bimodalSingle(string * table, int len, unsigned int address, string type) {
+	
 	unsigned int index = address % len;
 
 	if (type == table[index]) {
@@ -51,7 +52,7 @@ int bimodalDouble(string * table, int len, unsigned int address, string type) {
 		}
 		table[index] = "WN";
 		return 0;
-	} else {
+	} else if (type == "NT") {
 		if (table[index] == "TT") {
 			table[index] = "WT";
 			return 0;
@@ -89,7 +90,7 @@ int gshare(string * table, int len, short int &gr, int grLen, unsigned int addre
 		}
 		table[index] = "WN";
 		return 0;
-	} else {
+	} else if (type == "NT") {
 		//shift gr left one to put in the recent outcome
 		gr = gr << 1;
 		//clear the grLen+1 bit
@@ -357,8 +358,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	output << correctAT << "," << total << "; " << endl;
-	output << correctNT << "," << total << "; " << endl;
+	output << correctAT << "," << total << "; " << '\n';
+	output << correctNT << "," << total << "; " << '\n';
 	
 	output << correctS16 << "," << total << "; ";
 	output << correctS32 << "," << total << "; ";
@@ -367,7 +368,7 @@ int main(int argc, char *argv[]) {
 	output << correctS512 << "," << total << "; ";
 	output << correctS1024 << "," << total << "; ";
 	output << correctS2048 << "," << total << "; ";
-	output << endl;
+	output << '\n';
 
 	output << correctD16 << "," << total << "; ";
 	output << correctD32 << "," << total << "; ";
@@ -376,7 +377,7 @@ int main(int argc, char *argv[]) {
 	output << correctD512 << "," << total << "; ";
 	output << correctD1024 << "," << total << "; ";
 	output << correctD2048 << "," << total << "; ";
-	output << endl;
+	output << '\n';
 
 	output << correctGr3 << "," << total << "; ";
 	output << correctGr4 << "," << total << "; ";
@@ -387,9 +388,9 @@ int main(int argc, char *argv[]) {
 	output << correctGr9 << "," << total << "; ";
 	output << correctGr10 << "," << total << "; ";
 	output << correctGr11 << "," << total << "; ";
-	output << endl;
+	output << '\n';
 
-	output << correcttour << "," << total << "; " << endl;
+	output << correcttour << "," << total << "; " << '\n';
 
 	//tournament();
 
