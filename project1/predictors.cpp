@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
 	ofstream output;
 
 	input.open(infilename);
-	output.open(outfilename);
+	output.open(outfilename, ios::out);
 
 	unsigned int total = -1;
 
@@ -358,8 +358,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	output << correctAT << "," << total << "; " << '\n';
-	output << correctNT << "," << total << "; " << '\n';
+	output << correctAT << "," << total << ";" << endl;
+	output << correctNT << "," << total << ";" << endl;
 	
 	output << correctS16 << "," << total << "; ";
 	output << correctS32 << "," << total << "; ";
@@ -367,8 +367,7 @@ int main(int argc, char *argv[]) {
 	output << correctS256 << "," << total << "; ";
 	output << correctS512 << "," << total << "; ";
 	output << correctS1024 << "," << total << "; ";
-	output << correctS2048 << "," << total << "; ";
-	output << '\n';
+	output << correctS2048 << "," << total << ";" << endl;
 
 	output << correctD16 << "," << total << "; ";
 	output << correctD32 << "," << total << "; ";
@@ -376,8 +375,7 @@ int main(int argc, char *argv[]) {
 	output << correctD256 << "," << total << "; ";
 	output << correctD512 << "," << total << "; ";
 	output << correctD1024 << "," << total << "; ";
-	output << correctD2048 << "," << total << "; ";
-	output << '\n';
+	output << correctD2048 << "," << total << ";" << endl;
 
 	output << correctGr3 << "," << total << "; ";
 	output << correctGr4 << "," << total << "; ";
@@ -387,12 +385,9 @@ int main(int argc, char *argv[]) {
 	output << correctGr8 << "," << total << "; ";
 	output << correctGr9 << "," << total << "; ";
 	output << correctGr10 << "," << total << "; ";
-	output << correctGr11 << "," << total << "; ";
-	output << '\n';
+	output << correctGr11 << "," << total << ";" << endl;
 
-	output << correcttour << "," << total << "; " << '\n';
-
-	//tournament();
+	output << correcttour << "," << total << ";" << endl;
 
 	input.close();
 	output.close();
