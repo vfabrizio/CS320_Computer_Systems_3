@@ -4,6 +4,7 @@
 #include <vector>
 #include <cmath>
 #include <utility> //pair
+#include "LinkedList.h"
 
 using namespace std;
 
@@ -30,10 +31,39 @@ int direct_mapped(unsigned int address, pair<short int, int> table[], int size) 
 	return 0;
 }
 
-int set_associative(unsigned int address, pair<short int, int> table[], int sets) {
+int set_associative(unsigned int address, pair<short int, int> table[], vector<LinkedList> list, int ways) {
 	//all tables are 512 but if in another set then we will check
 	//		index + num of lines
-	int num_lines
+	int num_lines = 512 / ways;
+	int num_bits = floor(log2(num_lines));
+
+	int index = address & (num_lines-1); //get the last num_bits bits
+	int tag = address >> num_bits; // get the rest without the index;
+	int tempindex = index;
+
+	int i = 0;
+	while (i < ways) {
+		if (table[index].first == 1 && table[index].second == tag) {
+			return 1;
+		}
+		//didn't find in that way, go to the next
+		i++;
+		index = index+num_lines;
+	}
+	//didn't find in any way
+	if (list.empty()) {
+		table[tempindex].first = 1;
+		table[tempindex].second = tag;
+		list.insert(list.begin(), tag);
+	} else if (list.size() < num_lines) {
+		list.insert(list.begin(), tag);
+		int way_num = list.size();
+		table[tempindex + (way_num*num_lines)].first = 1;
+		table[tempindex + (way_num*num_lines)].second = tag;
+	} else if (list.size() == ways) {
+		
+	}
+
 }
 
 int main(int argc, char *argv[]) {
@@ -76,12 +106,16 @@ int main(int argc, char *argv[]) {
 	//all 16kb == 512 lines
 	pair<short int, int> twoset[512] = {};
 	fill_n(twoset, 512, make_pair(0, 0));
+	vector<LinkedList> two;
 	pair<short int, int> fourset[512] = {};
 	fill_n(fourset, 512, make_pair(0, 0));
+	vector<LinkedList> four;
 	pair<short int, int> eightset[512] = {};
 	fill_n(eightset, 512, make_pair(0, 0));
+	vector<LinkedList> eight;
 	pair<short int, int> sixteenset[512] = {};
 	fill_n(sixteenset, 512, make_pair(0, 0));
+	vector<LinkedList> sixteen;
 	int correct2 = 0;
 	int correct4 = 0;
 	int correct8 = 0;
@@ -112,16 +146,16 @@ int main(int argc, char *argv[]) {
 		if (direct_mapped(address, thirtytwoKB, 1024) == 1) {
 			correct32++;
 		}
-		if (set_associative(address, twoset, 2) == 1) {
+		if (set_associative(address, twoset, two, 2) == 1) {
 			correct2++;
 		}
-		if (set_associative(address, fourset, 4) == 1) {
+		if (set_associative(address, fourset, four, 4) == 1) {
 			correct4++;
 		}
-		if (set_associative(address, eightset, 8) == 1) {
+		if (set_associative(address, eightset, eight, 8) == 1) {
 			correct8++;
 		}
-		if (set_associative(address, sixteenset, 16) == 1) {
+		if (set_associative(address, sixteenset, sixteen, 16) == 1) {
 			correct16++;
 		}
 
