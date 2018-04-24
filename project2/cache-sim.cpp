@@ -31,7 +31,7 @@ int direct_mapped(unsigned int address, pair<short int, int> table[], int size) 
 	return 0;
 }
 
-int set_associative(unsigned int address, pair<short int, int> table[], vector<deque<pair<int,int> > > list, int ways) {
+int set_associative(unsigned int address, pair<short int, int> table[], vector<deque<pair<int,int>>> list, int ways) {
 	//all tables are 512 but if in another set then we will check
 	//		index + num of lines
 	int num_lines = 512 / ways;
@@ -51,18 +51,18 @@ int set_associative(unsigned int address, pair<short int, int> table[], vector<d
 		index = index+num_lines;
 	}
 	//didn't find in any way
-	if (list[tempindex].front().second == 0) {
+	if (list[tempindex].front().first == 0) {
 		//first element has way value = 0 so there's nothing there
 		table[tempindex].first = 1;
 		table[tempindex].second = tag;
 		list[tempindex].pop_back();
-		list[tempindex].push_front(make_pair(tag, 1));
+		list[tempindex].push_front(make_pair(tag, 0));
 	} else if (list[tempindex].back().second == 0) {
 		//if the last way is 0 then there's still room
 		int i = 0;
 		while (i < ways) {
-			if (list[tempindex][i].second != 0) i++;
-			else break;
+			if (list[tempindex][i].first != 0) break;
+			i++;
 		}
 		int way_num = i;
 		list[tempindex].pop_back();
@@ -81,9 +81,6 @@ int set_associative(unsigned int address, pair<short int, int> table[], vector<d
 	return 0;
 }
 
-int fully_associative() {
-
-}
 
 int main(int argc, char *argv[]) {
 	string infilename;
@@ -126,19 +123,19 @@ int main(int argc, char *argv[]) {
 	//pair in array <tag, way>
 	pair<short int, int> twoset[512] = {};
 	fill_n(twoset, 512, make_pair(0, 0));
-	vector<deque<pair<int,int> > > two(256, deque<pair<int,int> >(2, make_pair(0,0)));
+	vector<deque<pair<int,int>> > two (256, deque<pair<int,int>>(2, make_pair(0,0)));
 
 	pair<short int, int> fourset[512] = {};
 	fill_n(fourset, 512, make_pair(0, 0));
-	vector<deque<pair<int,int> > > four(128, deque<pair<int,int> >(4, make_pair(0,0)));
+	vector<deque<pair<int,int>> > four (128, deque<pair<int,int>>(4, make_pair(0,0)));
 
 	pair<short int, int> eightset[512] = {};
 	fill_n(eightset, 512, make_pair(0, 0));
-	vector<deque<pair<int,int> > > eight(64, deque<pair<int,int> >(8, make_pair(0,0)));
+	vector<deque<pair<int,int>> > eight (64, deque<pair<int,int>>(8, make_pair(0,0)));
 
 	pair<short int, int> sixteenset[512] = {};
 	fill_n(sixteenset, 512, make_pair(0, 0));
-	vector<deque<pair<int,int> > > sixteen(32, deque<pair<int,int> >(16, make_pair(0,0)));
+	vector<deque<pair<int,int>> > sixteen (32, deque<pair<int,int>>(16, make_pair(0,0)));
 
 	int correctSA2 = 0;
 	int correctSA4 = 0;
@@ -173,7 +170,7 @@ int main(int argc, char *argv[]) {
 		if (set_associative(address, twoset, two, 2) == 1) {
 			correctSA2++;
 		}
-		if (set_associative(address, fourset, four, 4) == 1) {
+		/*if (set_associative(address, fourset, four, 4) == 1) {
 			correctSA4++;
 		}
 		if (set_associative(address, eightset, eight, 8) == 1) {
@@ -181,7 +178,7 @@ int main(int argc, char *argv[]) {
 		}
 		if (set_associative(address, sixteenset, sixteen, 16) == 1) {
 			correctSA16++;
-		}
+		}*/
 
 	}
 
