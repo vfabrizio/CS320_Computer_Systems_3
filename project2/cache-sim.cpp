@@ -43,42 +43,43 @@ int set_associative(unsigned int address, pair<short int, int> table[], deque<pa
 
 	int i = 0;
 	while (i < ways) {
-		if (table[index].first == 1 && table[index].second == tag) {
-			return 1;
+		//check valid
+		if (table[index].first == 1) {
+			//check tag
+			if (table[index].second == tag) {
+				return 1;
+			}
 		}
 		//didn't find in that way, go to the next
 		i++;
-		index = index+num_lines;
+		index = index + num_lines;
 	}
 	//didn't find in any way
-	if (list[tempindex].front().first == 0) {
-		//first element has way value = 0 so there's nothing there
-		table[tempindex].first = 1;
-		table[tempindex].second = tag;
-		list[tempindex].pop_back();
-		list[tempindex].push_front(make_pair(tag, 0));
-	} else if (list[tempindex].back().second == 0) {
-		//if the last way is 0 then there's still room
-		int i = 0;
-		while (i < ways) {
-			if (list[tempindex][i].first != 0) break;
-			i++;
+	index = tempindex;
+	i = 0;
+	//look in ways for open slot
+	while (i < ways) {
+		if (table[index].first == 0) {
+			table[index].first = 1;
+			table[index].second = tag;
+			list[tempindex].pop_back();
+			list[tempindex].push_front(make_pair(tag, i));
+			return 0;
 		}
-		int way_num = i;
-		list[tempindex].pop_back();
-		list[tempindex].push_front(make_pair(tag, way_num));
-		table[tempindex + (way_num*num_lines)].first = 1;
-		table[tempindex + (way_num*num_lines)].second = tag;
-	} else {
-		//returns last element in LL == LRU
-		int way = list[tempindex].back().second;
-		int oldTag = list[tempindex].back().first;
-		list[tempindex].pop_back();
-		list[tempindex].push_front(make_pair(tag, way)); //new way = old way
-		table[tempindex + (way*num_lines)].first = 1;
-		table[tempindex + (way*num_lines)].second = tag;
+		i++;
+		index = index + num_lines;
 	}
+	//no empty slots in cache, use LRU
+	int way = list[tempindex].back().second;
+	list[tempindex].pop_back();
+	list[tempindex].push_front(make_pair(tag, way));
+	table[tempindex + (way*num_lines)].first = 1;
+	table[tempindex + (way*num_lines)].second = tag;
 	return 0;
+}
+
+int fully_associative() {
+
 }
 
 
@@ -125,30 +126,29 @@ int main(int argc, char *argv[]) {
 	fill_n(twoset, 512, make_pair(0, 0));
 	deque<pair<int,int>> two[256] = {};
 	fill_n(two, 256, deque<pair<int,int>>(2, make_pair(0,0)));
-	//vector<deque<pair<int,int>> > two (256, deque<pair<int,int>>(2, make_pair(0,0)));
 
 	pair<short int, int> fourset[512] = {};
 	fill_n(fourset, 512, make_pair(0, 0));
 	deque<pair<int,int>> four[128] = {};
 	fill_n(four, 128, deque<pair<int,int>>(4, make_pair(0,0)));
-	//vector<deque<pair<int,int>> > four (128, deque<pair<int,int>>(4, make_pair(0,0)));
 
 	pair<short int, int> eightset[512] = {};
 	fill_n(eightset, 512, make_pair(0, 0));
 	deque<pair<int,int>> eight[64] = {};
 	fill_n(eight, 64, deque<pair<int,int>>(8, make_pair(0,0)));
-	//vector<deque<pair<int,int>> > eight (64, deque<pair<int,int>>(8, make_pair(0,0)));
 
 	pair<short int, int> sixteenset[512] = {};
 	fill_n(sixteenset, 512, make_pair(0, 0));
 	deque<pair<int,int>> sixteen[32] = {};
 	fill_n(sixteen, 32, deque<pair<int,int>>(16, make_pair(0,0)));
-	//vector<deque<pair<int,int>> > sixteen (32, deque<pair<int,int>>(16, make_pair(0,0)));
 
 	int correctSA2 = 0;
 	int correctSA4 = 0;
 	int correctSA8 = 0;
 	int correctSA16 = 0;
+
+	//fully associative
+	pair<short int, int> full[512] = {};
 
 	unsigned int address = 0;
 	string type; //type is L = load or S = store
