@@ -85,7 +85,48 @@ int set_associative(unsigned int address, pair<short int, int> table[], deque<pa
 	return 0;
 }
 
-int fully_associative() {
+int fully_associative_lru(unsigned int address, pair<short int, int> table[], deque<pair<int,int>> list) {
+	//no index but there are 512 lines
+	int tag = address;
+
+	int i = 0;
+	while (i < 512) {
+		//check valid
+		if (table[i].first == 1) {
+			//check tag
+			if (table[i].second == tag) {
+				deque<pair<int,int>>::iterator loc = find(list.begin(), list.end(), make_pair(tag, i));
+				list.erase(loc);
+				list.push_front(*loc);
+				return 1;
+			}
+		}
+		//didnt find it in that way, go to the next
+		i++;
+	}
+	//cache miss
+	//didn't find in any way
+	i = 0;
+	while (i < 512) {
+		if (table[i].first == 0) {
+			table[i].first = 1;
+			table[i].second = tag;
+			list.pop_back();
+			list.push_front(make_pair(tag, i));
+			return 0;
+		}
+		i++;
+	}
+	//no empty slots in cache, use LRU
+	i = list.back().second;
+	list.pop_back();
+	list.push_front(make_pair(tag, i));
+	table[i].first = 1;
+	table[i].second = tag;
+	return 0;
+}
+
+int fully_associative_hc() {
 
 }
 
@@ -145,6 +186,10 @@ int set_no_alloc(string type, unsigned int address, pair<short int, int> table[]
 	return 0;
 }
 
+int set_prefetch(unsigned int address, pair<short int, int> table[], deque<pair<int,int>> list[], int ways) {
+
+}
+
 
 int main(int argc, char *argv[]) {
 	string infilename;
@@ -184,7 +229,7 @@ int main(int argc, char *argv[]) {
 
 	//set-associative
 	//all 16kb == 512 lines
-	//pair in array <tag, way>
+	//pair in deque <tag, way>
 	pair<short int, int> twoset[512] = {};
 	fill_n(twoset, 512, make_pair(0, 0));
 	deque<pair<int,int>> two[256] = {};
@@ -210,12 +255,18 @@ int main(int argc, char *argv[]) {
 	int correctSA8 = 0;
 	int correctSA16 = 0;
 
-	//fully associative
-	pair<short int, int> full[512] = {};
+	//fully associative lru
+	//pair in deque <tag, index>
+	pair<short int, int> full_lru[512] = {};
+	fill_n(full_lru, 512, make_pair(0, 0));
+	deque<pair<int,int>> lru (512, make_pair(0,0));
+	int correctFLRU = 0;
 
+	//fully associative hot cold
+	pair<short int, int> full_hc[512] = {};
+	fill_n(full_hc, 512, make_pair(0, 0));
 
-
-
+	int correctFHC = 0;
 
 	//set-associative no allocation for write miss
 	//all 16kb == 512 lines
@@ -245,6 +296,32 @@ int main(int argc, char *argv[]) {
 	int correctWM8 = 0;
 	int correctWM16 = 0;
 
+	//set-associative prefetching
+	pair<short int, int> twoset3[512] = {};
+	fill_n(twoset3, 512, make_pair(0, 0));
+	deque<pair<int,int>> two3[256] = {};
+	fill_n(two3, 256, deque<pair<int,int>>(2, make_pair(0,0)));
+
+	pair<short int, int> fourset3[512] = {};
+	fill_n(fourset3, 512, make_pair(0, 0));
+	deque<pair<int,int>> four3[128] = {};
+	fill_n(four3, 128, deque<pair<int,int>>(4, make_pair(0,0)));
+
+	pair<short int, int> eightset3[512] = {};
+	fill_n(eightset3, 512, make_pair(0, 0));
+	deque<pair<int,int>> eight3[64] = {};
+	fill_n(eight3, 64, deque<pair<int,int>>(8, make_pair(0,0)));
+
+	pair<short int, int> sixteenset3[512] = {};
+	fill_n(sixteenset3, 512, make_pair(0, 0));
+	deque<pair<int,int>> sixteen3[32] = {};
+	fill_n(sixteen3, 32, deque<pair<int,int>>(16, make_pair(0,0)));
+
+	int correctP2 = 0;
+	int correctP4 = 0;
+	int correctP8 = 0;
+	int correctP16 = 0;
+
 	unsigned int address = 0;
 	string type; //type is L = load or S = store
 	while (!input.eof()) {
@@ -270,6 +347,7 @@ int main(int argc, char *argv[]) {
 		if (direct_mapped(address, thirtytwoKB, 1024) == 1) {
 			correct32++;
 		}
+		//set-associative
 		if (set_associative(address, twoset, two, 2) == 1) {
 			correctSA2++;
 		}
@@ -282,8 +360,14 @@ int main(int argc, char *argv[]) {
 		if (set_associative(address, sixteenset, sixteen, 16) == 1) {
 			correctSA16++;
 		}
-
-
+		//fully-associative
+		if (fully_associative_lru(address, full_lru, lru) == 1) {
+			correctFLRU++;
+		}
+		/*if (fully_associative_hc() == 1) {
+			correctFHC++;
+		}*/
+		//set-associative with no allocation on write miss
 		if (set_no_alloc(type, address, twoset2, two2, 2) == 1) {
 			correctWM2++;
 		}
@@ -296,6 +380,20 @@ int main(int argc, char *argv[]) {
 		if (set_no_alloc(type, address, sixteenset2, sixteen2, 16) == 1) {
 			correctWM16++;
 		}
+		//set-associative with next-line prefetching
+		if (set_prefetch(address, twoset3, two3, 2) == 1) {
+			correctP2++;
+		}
+		if (set_prefetch(address, fourset3, four3, 4) == 1) {
+			correctP4++;
+		}
+		if (set_prefetch(address, eightset3, eight3, 8) == 1) {
+			correctP8++;
+		}
+		if (set_prefetch(address, sixteenset3, sixteen3, 16) == 1) {
+			correctP16++;
+		}
+		//set-associative with prefetch only on a miss
 	}
 
 	output << correct1 << "," << total << "; ";
@@ -308,10 +406,16 @@ int main(int argc, char *argv[]) {
 	output << correctSA8 << "," << total << "; ";
 	output << correctSA16 << "," << total << ";" << endl;
 
-
+	output << correctFLRU << "," << total << ";" << endl;
+	output << correctFHC << "," << total << ";" << endl;
 
 	output << correctWM2 << "," << total << "; ";
 	output << correctWM4 << "," << total << "; ";
 	output << correctWM8 << "," << total << "; ";
 	output << correctWM16 << "," << total << ";" << endl;
+
+	output << correctP2 << "," << total << "; ";
+	output << correctP4 << "," << total << "; ";
+	output << correctP8 << "," << total << "; ";
+	output << correctP16 << "," << total << ";" << endl;
 }
