@@ -5,6 +5,7 @@
 #include <deque>
 #include <cmath>
 #include <utility> //pair
+#include <algorithm> //find
 
 using namespace std;
 
@@ -47,6 +48,11 @@ int set_associative(unsigned int address, pair<short int, int> table[], deque<pa
 		if (table[index].first == 1) {
 			//check tag
 			if (table[index].second == tag) {
+				pair<int,int> curr = make_pair(tag, i);
+				deque<pair<int,int>>::iterator loc = find(list[tempindex].begin(), list[tempindex].end(), curr);
+				pair<int,int> temp = *loc;
+				list[tempindex].erase(loc);
+				list[tempindex].push_front(temp);
 				return 1;
 			}
 		}
@@ -54,6 +60,7 @@ int set_associative(unsigned int address, pair<short int, int> table[], deque<pa
 		i++;
 		index = index + num_lines;
 	}
+	//cache miss
 	//didn't find in any way
 	index = tempindex;
 	i = 0;
@@ -80,6 +87,62 @@ int set_associative(unsigned int address, pair<short int, int> table[], deque<pa
 
 int fully_associative() {
 
+}
+
+int set_no_alloc(string type, unsigned int address, pair<short int, int> table[], deque<pair<int,int>> list[], int ways) {
+	//all tables are 512 but if in another set then we will check
+	//		index + num of lines
+	int num_lines = 512 / ways;
+	int num_bits = floor(log2(num_lines));
+
+	int index = address & (num_lines-1); //get the last num_bits bits
+	int tag = address >> num_bits; // get the rest without the index;
+	int tempindex = index;
+
+	int i = 0;
+	while (i < ways) {
+		//check valid
+		if (table[index].first == 1) {
+			//check tag
+			if (table[index].second == tag) {
+				pair<int,int> curr = make_pair(tag, i);
+				deque<pair<int,int>>::iterator loc = find(list[tempindex].begin(), list[tempindex].end(), curr);
+				pair<int,int> temp = *loc;
+				list[tempindex].erase(loc);
+				list[tempindex].push_front(temp);
+				return 1;
+			}
+		}
+		//didn't find in that way, go to the next
+		i++;
+		index = index + num_lines;
+	}
+	//cache miss
+	//didn't find in any way
+	if (type != "S") {
+		index = tempindex;
+		i = 0;
+		//look in ways for open slot
+		while (i < ways) {
+			if (table[index].first == 0) {
+				table[index].first = 1;
+				table[index].second = tag;
+				list[tempindex].pop_back();
+				list[tempindex].push_front(make_pair(tag, i));
+				return 0;
+			}
+			i++;
+			index = index + num_lines;
+		}
+		//no empty slots in cache, use LRU
+		int way = list[tempindex].back().second;
+		list[tempindex].pop_back();
+		list[tempindex].push_front(make_pair(tag, way));
+		table[tempindex + (way*num_lines)].first = 1;
+		table[tempindex + (way*num_lines)].second = tag;
+		return 0;
+	}
+	return 0;
 }
 
 
@@ -150,6 +213,38 @@ int main(int argc, char *argv[]) {
 	//fully associative
 	pair<short int, int> full[512] = {};
 
+
+
+
+
+	//set-associative no allocation for write miss
+	//all 16kb == 512 lines
+	//pair in array <tag, way>
+	pair<short int, int> twoset2[512] = {};
+	fill_n(twoset2, 512, make_pair(0, 0));
+	deque<pair<int,int>> two2[256] = {};
+	fill_n(two2, 256, deque<pair<int,int>>(2, make_pair(0,0)));
+
+	pair<short int, int> fourset2[512] = {};
+	fill_n(fourset2, 512, make_pair(0, 0));
+	deque<pair<int,int>> four2[128] = {};
+	fill_n(four2, 128, deque<pair<int,int>>(4, make_pair(0,0)));
+
+	pair<short int, int> eightset2[512] = {};
+	fill_n(eightset2, 512, make_pair(0, 0));
+	deque<pair<int,int>> eight2[64] = {};
+	fill_n(eight2, 64, deque<pair<int,int>>(8, make_pair(0,0)));
+
+	pair<short int, int> sixteenset2[512] = {};
+	fill_n(sixteenset2, 512, make_pair(0, 0));
+	deque<pair<int,int>> sixteen2[32] = {};
+	fill_n(sixteen2, 32, deque<pair<int,int>>(16, make_pair(0,0)));
+
+	int correctWM2 = 0;
+	int correctWM4 = 0;
+	int correctWM8 = 0;
+	int correctWM16 = 0;
+
 	unsigned int address = 0;
 	string type; //type is L = load or S = store
 	while (!input.eof()) {
@@ -188,6 +283,19 @@ int main(int argc, char *argv[]) {
 			correctSA16++;
 		}
 
+
+		if (set_no_alloc(type, address, twoset2, two2, 2) == 1) {
+			correctWM2++;
+		}
+		if (set_no_alloc(type, address, fourset2, four2, 4) == 1) {
+			correctWM4++;
+		}
+		if (set_no_alloc(type, address, eightset2, eight2, 8) == 1) {
+			correctWM8++;
+		}
+		if (set_no_alloc(type, address, sixteenset2, sixteen2, 16) == 1) {
+			correctWM16++;
+		}
 	}
 
 	output << correct1 << "," << total << "; ";
@@ -199,4 +307,11 @@ int main(int argc, char *argv[]) {
 	output << correctSA4 << "," << total << "; ";
 	output << correctSA8 << "," << total << "; ";
 	output << correctSA16 << "," << total << ";" << endl;
+
+
+
+	output << correctWM2 << "," << total << "; ";
+	output << correctWM4 << "," << total << "; ";
+	output << correctWM8 << "," << total << "; ";
+	output << correctWM16 << "," << total << ";" << endl;
 }
