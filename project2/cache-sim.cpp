@@ -143,122 +143,6 @@ int set_no_alloc(string type, unsigned int address, pair<short int, int> table[]
 	return 0;
 }
 
-int set_prefetch(unsigned int address, pair<short int, int> table[], deque<pair<int,int>> list[], int ways) {
-	//all tables are 512 but if in another set then we will check
-	//		index + num of lines
-	int num_lines = 512 / ways;
-	int num_bits = floor(log2(num_lines));
-
-	int index = address & (num_lines-1); //get the last num_bits bits
-	int tag = address >> num_bits; // get the rest without the index;
-	int tempindex = index;
-
-	//prefetch is the index that we have to go to for the next line
-	int prefetch = (address + 1) & (num_lines-1);
-	int tempprefetch = prefetch;
-	//can't be sure they will go in the same way so you can't exit
-	//	the first while loop when you found original access
-	bool found = false;
-	bool added = false;
-	bool foundprefetch = false;
-
-	int i = 0;
-	while (i < ways) {
-		//check valid
-		if (table[index].first == 1) {
-			//check tag
-			if (table[index].second == tag) {
-				pair<int,int> curr = make_pair(tag, i);
-				deque<pair<int,int>>::iterator loc = find(list[tempindex].begin(), list[tempindex].end(), curr);
-				pair<int,int> temp = *loc;
-				list[tempindex].erase(loc);
-				list[tempindex].push_front(temp);
-				found = true;
-				break;
-			}
-		}
-		//didn't find in that way, go to the next
-		i++;
-		index = index + num_lines;
-	}
-	if (found == false) {
-		//cache miss for the original cache access
-		//didn't find in any way
-		index = tempindex;
-		i = 0;
-		//look in ways for open slot
-		while (i < ways) {
-			if (table[index].first == 0) {
-				table[index].first = 1;
-				table[index].second = tag;
-				list[tempindex].pop_back();
-				list[tempindex].push_front(make_pair(tag, i));
-				added = true;
-				break;
-			}
-			i++;
-			index = index + num_lines;
-		}
-		if (added == false) {
-			//no empty slots in cache, use LRU
-			int way = list[tempindex].back().second;
-			list[tempindex].pop_back();
-			list[tempindex].push_front(make_pair(tag, way));
-			table[tempindex + (way*num_lines)].first = 1;
-			table[tempindex + (way*num_lines)].second = tag;	
-			added = true;
-		}
-	}
-
-	//check if prefetch is in cache 
-	i = 0;
-	while (i < ways) {
-		//check valid
-		if (table[prefetch].first == 1) {
-			//check tag
-			if (table[prefetch].second == tag) {
-				pair<int,int> curr = make_pair(tag, i);
-				deque<pair<int,int>>::iterator loc = find(list[tempprefetch].begin(), list[tempprefetch].end(), curr);
-				pair<int,int> temp = *loc;
-				list[tempprefetch].erase(loc);
-				list[tempprefetch].push_front(temp);
-				if (found == true) return 1;
-				else return 0;
-			}
-		}
-		//didn't find in that way, go to the next
-		i++;
-		prefetch = prefetch + num_lines;
-	}
-	//if the prefetch isnt in the cache, put it in
-	prefetch = tempprefetch;
-	i = 0;
-	//look in ways for open slot
-	while (i < ways) {
-		if (table[prefetch].first == 0) {
-			table[prefetch].first = 1;
-			table[prefetch].second = tag;
-			list[tempprefetch].pop_back();
-			list[tempprefetch].push_front(make_pair(tag, i));
-			if (found == true) return 1;
-			else return 0;
-		}
-		i++;
-		prefetch = prefetch + num_lines;
-	}
-	//no empty slots in cache, use LRU
-	int way = list[tempprefetch].back().second;
-	list[tempprefetch].pop_back();
-	list[tempprefetch].push_front(make_pair(tag, way));
-	table[tempprefetch + (way*num_lines)].first = 1;
-	table[tempprefetch + (way*num_lines)].second = tag;
-	if (found == true) return 1;
-	else return 0;
-}
-
-int set_prefetch_miss(unsigned int address, pair<short int, int> table[], deque<pair<int,int>> list[], int ways) {
-}
-
 int main(int argc, char *argv[]) {
 	string infilename;
 	string outfilename;
@@ -478,31 +362,43 @@ int main(int argc, char *argv[]) {
 			correctWM16++;
 		}
 		//set-associative with next-line prefetching
-		if (set_prefetch(address, twoset3, two3, 2) == 1) {
+		int blah = set_associative((address+1), twoset3, two3, 2);
+		if (set_associative(address, twoset3, two3, 2) == 1) {
 			correctP2++;
 		}
-		if (set_prefetch(address, fourset3, four3, 4) == 1) {
+		blah = set_associative((address+1), fourset3, four3, 4);
+		if (set_associative(address, fourset3, four3, 4) == 1) {
 			correctP4++;
 		}
-		if (set_prefetch(address, eightset3, eight3, 8) == 1) {
+		blah = set_associative((address+1), eightset3, eight3, 8);
+		if (set_associative(address, eightset3, eight3, 8) == 1) {
 			correctP8++;
 		}
-		if (set_prefetch(address, sixteenset3, sixteen3, 16) == 1) {
+		blah = set_associative((address+1), sixteenset3, sixteen3, 16);
+		if (set_associative(address, sixteenset3, sixteen3, 16) == 1) {
 			correctP16++;
 		}
 		//set-associative with prefetch only on a miss
-		/*if (set_prefetch_miss(address, twoset4, two4, 2) == 1) {
-			correctP2++;
+		if (set_associative(address, twoset4, two4, 2) == 1) {
+			correctPM2++;
+		} else {
+			blah = set_associative((address+1), twoset4, two4, 2);
 		}
-		if (set_prefetch_miss(address, fourset4, four4, 4) == 1) {
-			correctP4++;
+		if (set_associative(address, fourset4, four4, 4) == 1) {
+			correctPM4++;
+		} else {
+			blah = set_associative((address+1), fourset4, four4, 4);
 		}
-		if (set_prefetch_miss(address, eightset4, eight4, 8) == 1) {
-			correctP8++;
+		if (set_associative(address, eightset4, eight4, 8) == 1) {
+			correctPM8++;
+		} else {
+			blah = set_associative((address+1), eightset4, eight4, 8);
 		}
-		if (set_prefetch_miss(address, sixteenset4, sixteen4, 16) == 1) {
-			correctP16++;
-		}*/
+		if (set_associative(address, sixteenset4, sixteen4, 16) == 1) {
+			correctPM16++;
+		} else {
+			blah = set_associative((address+1), sixteenset4, sixteen4, 16);
+		}
 	}
 
 	output << correct1 << "," << total << "; ";
