@@ -83,62 +83,6 @@ int set_associative(unsigned int address, pair<short int, int> table[], deque<pa
 	return 0;
 }
 
-int fully_associative_lru(unsigned int address, pair<short int, int> table[], deque<pair<int,int>> list) {
-//all tables are 512 but if in another set then we will check
-	//		index + num of lines
-	int ways = 512;
-	int num_lines = 512 / ways;
-	int num_bits = floor(log2(num_lines));
-
-	int index = address & (num_lines-1); //get the last num_bits bits
-	int tag = address >> num_bits; // get the rest without the index;
-	int tempindex = index;
-
-	int i = 0;
-	while (i < ways) {
-		//check valid
-		if (table[index].first == 1) {
-			//check tag
-			if (table[index].second == tag) {
-				pair<int,int> curr = make_pair(tag, i);
-				deque<pair<int,int>>::iterator loc = find(list.begin(), list.end(), curr);
-				pair<int,int> temp = *loc;
-				list.erase(loc);
-				list.push_front(temp);
-				return 1;
-			}
-		}
-		//didn't find in that way, go to the next
-		i++;
-		index = index + num_lines;
-	}
-	//cache miss
-	//didn't find in any way
-	index = tempindex;
-	i = 0;
-	//look in ways for open slot
-	while (i < ways) {
-		if (table[index].first == 0) {
-			table[index].first = 1;
-			table[index].second = tag;
-			list.pop_back();
-			list.push_front(make_pair(tag, i));
-			return 0;
-		}
-		i++;
-		index = index + num_lines;
-	}
-	//no empty slots in cache, use LRU
-	int way = list.back().second;
-	list.pop_back();
-	list.push_front(make_pair(tag, way));
-	//table[tempindex + (way*num_lines)].first = 1;
-	//table[tempindex + (way*num_lines)].second = tag;
-	table[way].first = 1;
-	table[way].second = tag;
-	return 0;
-}
-
 int fully_associative_hc() {
 
 }
@@ -383,7 +327,9 @@ int main(int argc, char *argv[]) {
 	//pair in deque <tag, index>
 	pair<short int, int> full_lru[512] = {};
 	fill_n(full_lru, 512, make_pair(0, 0));
-	deque<pair<int,int>> lru (512, make_pair(0,0));
+	deque<pair<int,int>> lru[1] = {};
+	fill_n(lru, 1, deque<pair<int,int>>(512, make_pair(0,0)));
+	//deque<pair<int,int>> lru (512, make_pair(0,0));
 	int correctFLRU = 0;
 
 	//fully associative hot cold
@@ -511,10 +457,11 @@ int main(int argc, char *argv[]) {
 			correctSA16++;
 		}
 		//fully-associative
-		/*if (fully_associative_lru(address, full_lru, lru) == 1) {
+		//call set-associative
+		if (set_associative(address, full_lru, lru, 512) == 1) {
 			correctFLRU++;
 		}
-		if (fully_associative_hc() == 1) {
+		/*if (fully_associative_hc() == 1) {
 			correctFHC++;
 		}*/
 		//set-associative with no allocation on write miss
