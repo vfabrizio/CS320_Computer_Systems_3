@@ -187,7 +187,116 @@ int set_no_alloc(string type, unsigned int address, pair<short int, int> table[]
 }
 
 int set_prefetch(unsigned int address, pair<short int, int> table[], deque<pair<int,int>> list[], int ways) {
+	//all tables are 512 but if in another set then we will check
+	//		index + num of lines
+	int num_lines = 512 / ways;
+	int num_bits = floor(log2(num_lines));
 
+	int index = address & (num_lines-1); //get the last num_bits bits
+	int tag = address >> num_bits; // get the rest without the index;
+	int tempindex = index;
+
+	int prefetch = (address + 1) & (num_lines-1);
+	int tempprefetch = prefetch;
+	int ptag = (address + 32) >> num_bits;
+	//can't be sure they will go in the same way so you can't exit
+	//	the first while loop when you found original access
+	bool found = false;
+	bool foundprefetch = false;
+
+	int i = 0;
+	while (i < ways) {
+		//check valid
+		if (table[index].first == 1) {
+			//check tag
+			if (table[index].second == tag) {
+				pair<int,int> curr = make_pair(tag, i);
+				deque<pair<int,int>>::iterator loc = find(list[tempindex].begin(), list[tempindex].end(), curr);
+				list[tempindex].erase(loc);
+				list[tempindex].push_front(*loc);
+				found = true;
+				break;
+			}
+		}
+		//didn't find in that way, go to the next
+		i++;
+		index = index + num_lines;
+	}
+	//check if prefetch is in cache, if found 
+	i = 0;
+	while (i < ways) {
+		//check valid
+		if (table[prefetch].first == 1) {
+			//check tag
+			if (table[prefetch].second == ptag) {
+				pair<int,int> curr = make_pair(ptag, i);
+				deque<pair<int,int>>::iterator loc = find(list[tempprefetch].begin(), list[tempindex].end(), curr);
+				list[tempprefetch].erase(loc);
+				list[tempprefetch].push_front(*loc);
+				//both in cache
+				if (found == true) {
+					return 1;
+				}
+				foundprefetch = true;
+				break;
+			}
+		}
+		//didn't find in that way, go to the next
+		i++;
+		prefetch = prefetch + num_lines;
+	}
+	if (foundprefetch == false) {
+		//if the prefetch isnt in the cache, put it in
+		prefetch = tempprefetch;
+		i = 0;
+		//look in ways for open slot
+		while (i < ways) {
+			if (table[prefetch].first == 0) {
+				table[prefetch].first = 1;
+				table[prefetch].second = ptag;
+				list[tempprefetch].pop_back();
+				list[tempprefetch].push_front(make_pair(ptag, i));
+				if (found == true) {
+					return 1;
+				}
+				break;
+			}
+			i++;
+			prefetch = prefetch + num_lines;
+		}
+		//no empty slots in cache, use LRU
+		int way = list[tempprefetch].back().second;
+		list[tempprefetch].pop_back();
+		list[tempprefetch].push_front(make_pair(ptag, way));
+		table[tempprefetch + (way*num_lines)].first = 1;
+		table[tempprefetch + (way*num_lines)].second = tag;
+		if (found == true) {
+			return 1;
+		}
+	}
+	//cache miss for the original cache access
+	//didn't find in any way
+	index = tempindex;
+	i = 0;
+	//look in ways for open slot
+	while (i < ways) {
+		if (table[index].first == 0) {
+			table[index].first = 1;
+			table[index].second = tag;
+			list[tempindex].pop_back();
+			list[tempindex].push_front(make_pair(tag, i));
+			return 0;
+		}
+		i++;
+		index = index + num_lines;
+	}
+	//no empty slots in cache, use LRU
+	int way = list[tempindex].back().second;
+	list[tempindex].pop_back();
+	list[tempindex].push_front(make_pair(tag, way));
+	table[tempindex + (way*num_lines)].first = 1;
+	table[tempindex + (way*num_lines)].second = tag;	
+	return 0;
 }
 
 
@@ -381,7 +490,7 @@ int main(int argc, char *argv[]) {
 			correctWM16++;
 		}
 		//set-associative with next-line prefetching
-		if (set_prefetch(address, twoset3, two3, 2) == 1) {
+		/*if (set_prefetch(address, twoset3, two3, 2) == 1) {
 			correctP2++;
 		}
 		if (set_prefetch(address, fourset3, four3, 4) == 1) {
@@ -392,7 +501,7 @@ int main(int argc, char *argv[]) {
 		}
 		if (set_prefetch(address, sixteenset3, sixteen3, 16) == 1) {
 			correctP16++;
-		}
+		}*/
 		//set-associative with prefetch only on a miss
 	}
 
