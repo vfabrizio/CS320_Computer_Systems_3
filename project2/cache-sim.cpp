@@ -14,10 +14,8 @@ int direct_mapped(unsigned int address, pair<short int, int> table[], int size) 
 
 	int index = address & (size-1); //get the last num_bits bits
 	int tag = address >> num_bits; // get the rest without the index;
-	//cout << address << '\t' << index << '\t' << tag << endl;
 
 	if (table[index].first == 1) {
-		//cout << "yo" << endl;
 		if (table[index].second == tag) {
 			return 1;
 		} else {
@@ -86,43 +84,58 @@ int set_associative(unsigned int address, pair<short int, int> table[], deque<pa
 }
 
 int fully_associative_lru(unsigned int address, pair<short int, int> table[], deque<pair<int,int>> list) {
-	//no index but there are 512 lines
-	int tag = address;
+//all tables are 512 but if in another set then we will check
+	//		index + num of lines
+	int ways = 512;
+	int num_lines = 512 / ways;
+	int num_bits = floor(log2(num_lines));
+
+	int index = address & (num_lines-1); //get the last num_bits bits
+	int tag = address >> num_bits; // get the rest without the index;
+	int tempindex = index;
 
 	int i = 0;
-	while (i < 512) {
+	while (i < ways) {
 		//check valid
-		if (table[i].first == 1) {
+		if (table[index].first == 1) {
 			//check tag
-			if (table[i].second == tag) {
-				deque<pair<int,int>>::iterator loc = find(list.begin(), list.end(), make_pair(tag, i));
+			if (table[index].second == tag) {
+				pair<int,int> curr = make_pair(tag, i);
+				deque<pair<int,int>>::iterator loc = find(list.begin(), list.end(), curr);
+				pair<int,int> temp = *loc;
 				list.erase(loc);
-				list.push_front(*loc);
+				list.push_front(temp);
 				return 1;
 			}
 		}
-		//didnt find it in that way, go to the next
+		//didn't find in that way, go to the next
 		i++;
+		index = index + num_lines;
 	}
 	//cache miss
 	//didn't find in any way
+	index = tempindex;
 	i = 0;
-	while (i < 512) {
-		if (table[i].first == 0) {
-			table[i].first = 1;
-			table[i].second = tag;
+	//look in ways for open slot
+	while (i < ways) {
+		if (table[index].first == 0) {
+			table[index].first = 1;
+			table[index].second = tag;
 			list.pop_back();
 			list.push_front(make_pair(tag, i));
 			return 0;
 		}
 		i++;
+		index = index + num_lines;
 	}
 	//no empty slots in cache, use LRU
-	i = list.back().second;
+	int way = list.back().second;
 	list.pop_back();
-	list.push_front(make_pair(tag, i));
-	table[i].first = 1;
-	table[i].second = tag;
+	list.push_front(make_pair(tag, way));
+	//table[tempindex + (way*num_lines)].first = 1;
+	//table[tempindex + (way*num_lines)].second = tag;
+	table[way].first = 1;
+	table[way].second = tag;
 	return 0;
 }
 
@@ -212,8 +225,9 @@ int set_prefetch(unsigned int address, pair<short int, int> table[], deque<pair<
 			if (table[index].second == tag) {
 				pair<int,int> curr = make_pair(tag, i);
 				deque<pair<int,int>>::iterator loc = find(list[tempindex].begin(), list[tempindex].end(), curr);
+				pair<int,int> temp = *loc;
 				list[tempindex].erase(loc);
-				list[tempindex].push_front(*loc);
+				list[tempindex].push_front(temp);
 				found = true;
 				break;
 			}
@@ -230,9 +244,10 @@ int set_prefetch(unsigned int address, pair<short int, int> table[], deque<pair<
 			//check tag
 			if (table[prefetch].second == ptag) {
 				pair<int,int> curr = make_pair(ptag, i);
-				deque<pair<int,int>>::iterator loc = find(list[tempprefetch].begin(), list[tempindex].end(), curr);
+				deque<pair<int,int>>::iterator loc = find(list[tempprefetch].begin(), list[tempprefetch].end(), curr);
+				pair<int,int> temp = *loc;
 				list[tempprefetch].erase(loc);
-				list[tempprefetch].push_front(*loc);
+				list[tempprefetch].push_front(temp);
 				//both in cache
 				if (found == true) {
 					return 1;
@@ -490,7 +505,7 @@ int main(int argc, char *argv[]) {
 			correctWM16++;
 		}
 		//set-associative with next-line prefetching
-		/*if (set_prefetch(address, twoset3, two3, 2) == 1) {
+		if (set_prefetch(address, twoset3, two3, 2) == 1) {
 			correctP2++;
 		}
 		if (set_prefetch(address, fourset3, four3, 4) == 1) {
@@ -501,7 +516,7 @@ int main(int argc, char *argv[]) {
 		}
 		if (set_prefetch(address, sixteenset3, sixteen3, 16) == 1) {
 			correctP16++;
-		}*/
+		}
 		//set-associative with prefetch only on a miss
 	}
 
