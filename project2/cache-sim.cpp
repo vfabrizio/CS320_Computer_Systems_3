@@ -85,7 +85,7 @@ int set_associative(unsigned int address, pair<short int, int> table[], deque<pa
 
 int find_hot_cold(int hc[]) {
 	//returns the index of the way that is least recently used
-	int size = 265;
+	int size = 256;
 	int index = 256;
 	while (index >= 0) {
 		size = floor(size/2);
@@ -118,10 +118,10 @@ void update_hot_cold(int way, int hc[]) {
 	//deque of indexes that need to be updated
 	//pair <index, value>
 	deque<pair<int,int>> update;
-	int size = 512;
+	int size = 256;
 	int index = 256;
 	update.push_front(make_pair(index, hc[index]));
-	while (index >= 0 && index < 512) {
+	while (index >= 0) {
 		size = floor(size/2);
 		if (hc[index] == 0) {
 			//left is hot so go right
@@ -131,8 +131,9 @@ void update_hot_cold(int way, int hc[]) {
 				break;
 			}
 			index = index + size;
-			update.push_front(make_pair(index,0));
-		} else if (hc[index] == 1) {
+			update.push_front(make_pair(index, 0));
+		}
+		else if (hc[index] == 1) {
 			//right is hot so go left
 			if (size == 0) {
 				//got all the ways into the deque
@@ -140,7 +141,7 @@ void update_hot_cold(int way, int hc[]) {
 				break;
 			}
 			index = index - size;
-			update.push_front(make_pair(index,1));
+			update.push_front(make_pair(index, 1));
 		}
 	}
 	for (unsigned int j = 0; j < update.size(); j++) {
@@ -199,8 +200,8 @@ int fully_associative_hc(unsigned int address, pair<short int, int> table[], int
 	//no empty slots in cache, use LRU
 	int way = find_hot_cold(hc);
 	update_hot_cold(way, hc);
-	table[tempindex + (way*num_lines)].first = 1;
-	table[tempindex + (way*num_lines)].second = tag;
+	table[way].first = 1;
+	table[way].second = tag;
 	return 0;
 
 }
