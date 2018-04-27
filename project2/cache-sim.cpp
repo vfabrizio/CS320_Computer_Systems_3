@@ -83,7 +83,125 @@ int set_associative(unsigned int address, pair<short int, int> table[], deque<pa
 	return 0;
 }
 
-int fully_associative_hc() {
+int find_hot_cold(int hc[]) {
+	//returns the index of the way that is least recently used
+	int size = 265;
+	int index = 256;
+	while (index >= 0) {
+		size = floor(size/2);
+		if (hc[index] == 0) {
+			//cout << "getting in 0" << endl;
+			//left is hot so go right
+			if (size == 0) {
+				//if we halfed it enough that there was only one
+				//more way to check and we found it 
+				return index;
+			}
+			index = index + size;
+		}
+		else if (hc[index] == 1) {
+			//cout << "getting in 1" << endl;
+			//right is hot so go left
+			if (size == 0) {
+				//if we halfed it enough that there was only one
+				//more way to check and we found it 
+				return index;
+			}
+			index = index - size;
+		}
+	}
+	cout << "should never get out here" << endl;
+	return index;
+}
+
+void update_hot_cold(int way, int hc[]) {
+	//deque of indexes that need to be updated
+	//pair <index, value>
+	deque<pair<int,int>> update;
+	int size = 512;
+	int index = 256;
+	update.push_front(make_pair(index, hc[index]));
+	while (index >= 0 && index < 512) {
+		size = floor(size/2);
+		if (hc[index] == 0) {
+			//left is hot so go right
+			if (size == 0) {
+				//got all the ways into the deque
+				//break and update
+				break;
+			}
+			index = index + size;
+			update.push_front(make_pair(index,0));
+		} else if (hc[index] == 1) {
+			//right is hot so go left
+			if (size == 0) {
+				//got all the ways into the deque
+				//break and update
+				break;
+			}
+			index = index - size;
+			update.push_front(make_pair(index,1));
+		}
+	}
+	for (unsigned int j = 0; j < update.size(); j++) {
+		if (update[j].second == 0) {
+			hc[update[j].first] = 1;
+		}
+		else if (update[j].second == 1) {
+			hc[update[j].first] = 0;
+		}
+	}
+}
+
+int fully_associative_hc(unsigned int address, pair<short int, int> table[], int hc[]) {
+	//keep splitting in half and going left or right according to
+	//the 0 or 1. 0 means left is hot, 1 means right is hot
+	//cold = less used
+	//so if 0 go right, if 1 go left
+	
+	int ways = 512;
+	int num_lines = 512 / ways;
+	int num_bits = floor(log2(num_lines));
+
+	int index = address & (num_lines-1); //get the last num_bits bits
+	int tag = address >> num_bits; // get the rest without the index;
+	int tempindex = index;
+
+	int i = 0;
+	while (i < ways) {
+		//check valid
+		if (table[index].first == 1) {
+			//check tag
+			if (table[index].second == tag) {
+				update_hot_cold(i, hc);
+				return 1;
+			}
+		}
+		//didn't find in that way, go to the next
+		i++;
+		index = index + num_lines;
+	}
+	//cache miss
+	//didn't find in any way
+	index = tempindex;
+	i = 0;
+	//look in ways for open slot
+	while (i < ways) {
+		if (table[index].first == 0) {
+			table[index].first = 1;
+			table[index].second = tag;
+			update_hot_cold(i, hc);
+			return 0;
+		}
+		i++;
+		index = index + num_lines;
+	}
+	//no empty slots in cache, use LRU
+	int way = find_hot_cold(hc);
+	update_hot_cold(way, hc);
+	table[tempindex + (way*num_lines)].first = 1;
+	table[tempindex + (way*num_lines)].second = tag;
+	return 0;
 
 }
 
@@ -219,7 +337,9 @@ int main(int argc, char *argv[]) {
 	//fully associative hot cold
 	pair<short int, int> full_hc[512] = {};
 	fill_n(full_hc, 512, make_pair(0, 0));
-
+	int hc[512] = {};
+	//fill with 1s so it starts by adding stuff all the way left
+	fill_n(hc, 512, 1);
 	int correctFHC = 0;
 
 	//set-associative no allocation for write miss
@@ -340,14 +460,14 @@ int main(int argc, char *argv[]) {
 		if (set_associative(address, sixteenset, sixteen, 16) == 1) {
 			correctSA16++;
 		}
-		//fully-associative
-		//call set-associative
+		//fully-associative lru
 		if (set_associative(address, full_lru, lru, 512) == 1) {
 			correctFLRU++;
 		}
-		/*if (fully_associative_hc() == 1) {
+		//fully-associative hot cold
+		if (fully_associative_hc(address, full_hc, hc) == 1) {
 			correctFHC++;
-		}*/
+		}
 		//set-associative with no allocation on write miss
 		if (set_no_alloc(type, address, twoset2, two2, 2) == 1) {
 			correctWM2++;
