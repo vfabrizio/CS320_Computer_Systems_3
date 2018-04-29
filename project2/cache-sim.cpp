@@ -86,21 +86,19 @@ int set_associative(unsigned int address, pair<short int, int> table[], deque<pa
 int find_hot_cold(int hc[]) {
 	//returns the index of the way that is least recently used
 	int size = 256;
-	int index = 256;
+	int index = 255;
 	while (index >= 0) {
 		size = floor(size/2);
 		if (hc[index] == 0) {
-			//cout << "getting in 0" << endl;
 			//left is hot so go right
 			if (size == 0) {
 				//if we halfed it enough that there was only one
 				//more way to check and we found it 
-				return index;
+				return index+1;
 			}
 			index = index + size;
 		}
 		else if (hc[index] == 1) {
-			//cout << "getting in 1" << endl;
 			//right is hot so go left
 			if (size == 0) {
 				//if we halfed it enough that there was only one
@@ -114,13 +112,14 @@ int find_hot_cold(int hc[]) {
 	return index;
 }
 
-void update_hot_cold(int way, int hc[]) {
+void update_hot_cold(int hc[]) {
 	//deque of indexes that need to be updated
-	//pair <index, value>
+	//pair <index, value 0 or 1>
 	deque<pair<int,int>> update;
 	int size = 256;
-	int index = 256;
+	int index = 255;
 	update.push_front(make_pair(index, hc[index]));
+
 	while (index >= 0) {
 		size = floor(size/2);
 		if (hc[index] == 0) {
@@ -154,52 +153,84 @@ void update_hot_cold(int way, int hc[]) {
 	}
 }
 
+void update_hot_cold(int way, int hc[]) {
+	if (way % 2 == 0) {
+		//even way so index in hc is the same
+		if (hc[way] == 0) {
+			hc[way] = 1;
+		}
+		else if (hc[way] == 1) {
+			hc[way] = 0;
+		}	 
+	} 
+	else {
+		//odd way so index -1
+		if (hc[way-1] == 0) {
+			hc[way-1] = 1;
+		}
+		else if (hc[way-1] == 1) {
+			hc[way-1] = 0;
+		}
+	}
+
+	//deque of indexes that need to be updated
+	//pair <index, value 0 or 1>
+	/*deque<pair<int,int>> update;
+	int size = 256;
+	int index = 255;
+	update.push_front(make_pair(index, hc[index]));
+
+	if (way <= index) {
+		update.push_front(make_pair((size/2), hc[(size/2)]));
+	} else {
+		update.push_front(make_pair((size+(size/2)), hc[(size+(size/2))]));
+	}
+
+	if (way % 2 == 0) {
+		//even way so index in hc is the same
+		update.push_front(make_pair(way, hc[way]));
+		 
+	} 
+	else {
+		//odd way so index -1
+		update.push_front(make_pair(way-1, hc[way-1]));
+	}
+
+	for (unsigned int j = 0; j < update.size(); j++) {
+		if (update[j].second == 0) {
+			hc[update[j].first] = 1;
+		}
+		else if (update[j].second == 1) {
+			hc[update[j].first] = 0;
+		}
+	}*/
+}
+
 int fully_associative_hc(unsigned int address, pair<short int, int> table[], int hc[]) {
 	//keep splitting in half and going left or right according to
 	//the 0 or 1. 0 means left is hot, 1 means right is hot
 	//cold = less used
 	//so if 0 go right, if 1 go left
-	
 	int ways = 512;
-	int num_lines = 512 / ways;
-	int num_bits = floor(log2(num_lines));
-
-	int index = address & (num_lines-1); //get the last num_bits bits
-	int tag = address >> num_bits; // get the rest without the index;
-	int tempindex = index;
+	int tag = address;
 
 	int i = 0;
 	while (i < ways) {
 		//check valid
-		if (table[index].first == 1) {
+		if (table[i].first == 1) {
 			//check tag
-			if (table[index].second == tag) {
+			if (table[i].second == tag) {
 				update_hot_cold(i, hc);
 				return 1;
 			}
 		}
 		//didn't find in that way, go to the next
 		i++;
-		index = index + num_lines;
 	}
 	//cache miss
-	//didn't find in any way
-	index = tempindex;
-	i = 0;
-	//look in ways for open slot
-	while (i < ways) {
-		if (table[index].first == 0) {
-			table[index].first = 1;
-			table[index].second = tag;
-			update_hot_cold(i, hc);
-			return 0;
-		}
-		i++;
-		index = index + num_lines;
-	}
-	//no empty slots in cache, use LRU
+	//didn't find in any way, use hot cold
 	int way = find_hot_cold(hc);
-	update_hot_cold(way, hc);
+	update_hot_cold(hc);
 	table[way].first = 1;
 	table[way].second = tag;
 	return 0;
@@ -338,9 +369,9 @@ int main(int argc, char *argv[]) {
 	//fully associative hot cold
 	pair<short int, int> full_hc[512] = {};
 	fill_n(full_hc, 512, make_pair(0, 0));
-	int hc[512] = {};
+	int hc[511] = {};
 	//fill with 1s so it starts by adding stuff all the way left
-	fill_n(hc, 512, 1);
+	fill_n(hc, 511, 1);
 	int correctFHC = 0;
 
 	//set-associative no allocation for write miss
