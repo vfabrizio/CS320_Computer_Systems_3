@@ -172,38 +172,6 @@ void update_hot_cold(int way, int hc[]) {
 			hc[way-1] = 0;
 		}
 	}
-
-	//deque of indexes that need to be updated
-	//pair <index, value 0 or 1>
-	/*deque<pair<int,int>> update;
-	int size = 256;
-	int index = 255;
-	update.push_front(make_pair(index, hc[index]));
-
-	if (way <= index) {
-		update.push_front(make_pair((size/2), hc[(size/2)]));
-	} else {
-		update.push_front(make_pair((size+(size/2)), hc[(size+(size/2))]));
-	}
-
-	if (way % 2 == 0) {
-		//even way so index in hc is the same
-		update.push_front(make_pair(way, hc[way]));
-		 
-	} 
-	else {
-		//odd way so index -1
-		update.push_front(make_pair(way-1, hc[way-1]));
-	}
-
-	for (unsigned int j = 0; j < update.size(); j++) {
-		if (update[j].second == 0) {
-			hc[update[j].first] = 1;
-		}
-		else if (update[j].second == 1) {
-			hc[update[j].first] = 0;
-		}
-	}*/
 }
 
 int fully_associative_hc(unsigned int address, pair<short int, int> table[], int hc[]) {
